@@ -1,8 +1,27 @@
 # encoding=utf-8
 import numpy as np
 from getChineseData import has_chinese
-import jieba
+import jieba.posseg as peg
 import sys
+
+VECTORS_POS = 'data/vectors.txt'
+DOC_POS = 'data/extracted.txt'
+IGNORED = ["和", "的"]
+THRESHOLD = 0.70
+
+
+def checkType(s1, s2):
+    # if s1 == 'n' and s2 == 'n':
+    #     return True
+    # if s1 == 'v' and s2 == 'n':
+    #     return True
+    return True
+
+
+def checkContent(s1, s2):
+    if len(s1) == 1 or len(s2) == 1:
+        return False
+    return True
 
 
 def cosine_distance(matrix1, matrix2):
@@ -13,12 +32,6 @@ def cosine_distance(matrix1, matrix2):
     matrix2_norm = matrix2_norm[:, np.newaxis]
     cosine_distance = np.divide(matrix1_matrix2, np.dot(matrix1_norm, matrix2_norm.transpose()))
     return cosine_distance
-
-
-VECTORS_POS = 'data/vectors.txt'
-DOC_POS = 'data/3.txt'
-IGNORED = ["和"]
-THRESHOLD = 0.8
 
 if __name__ == "__main__":
     dic = {}
@@ -31,24 +44,33 @@ if __name__ == "__main__":
 
     fr = open(DOC_POS, 'r', encoding='utf-8')
     for line in fr:
-        v = " ".join(jieba.cut(line, cut_all=False)).strip().split(' ')
+
+        groups = peg.cut(line)
+
+        processed = []
+        for word, flag in groups:
+            if word != ' ':
+                processed.append([word, flag])
+
         not_separate = []
 
-        for i in range(v.count('')):
-            v.remove('')
-        for a in range(len(v) - 1):
-            if v[a] in dic.keys() and v[a + 1] in dic.keys():
-                matrix1 = np.array([list(map(float, dic[v[a]]))])
-                matrix2 = np.array([list(map(float, dic[v[a + 1]]))])
-                c = cosine_distance(matrix1, matrix2)
-                if c >= THRESHOLD:
-                    not_separate.append(a)
+        for a in range(len(processed) - 1):
+            if processed[a][0] in dic.keys() and processed[a + 1][0] in dic.keys() and len(processed[a][0]) > 1:
+                if checkContent(processed[a][0], processed[a + 1][0]) and checkType(processed[a][1], processed[a + 1][1]):
+                    matrix1 = np.array([list(map(float, dic[processed[a][0]]))])
+                    matrix2 = np.array([list(map(float, dic[processed[a + 1][0]]))])
+                    c = cosine_distance(matrix1, matrix2)
+                    if c >= THRESHOLD:
+                        not_separate.append(a)
 
         st = ''
-        for a in range(len(v)):
-            st = st + v[a]
+
+        for a in range(len(processed)):
+            st = st + processed[a][0]
             if a not in not_separate:
                 st = st + ' '
-
+            else:
+                # st = st + '-'
+                st = st + '(' + processed[a][1] + '/' + processed[a+1][1] + ')-'
         print(st)
     fr.close()

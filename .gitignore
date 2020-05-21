@@ -1,4 +1,7 @@
 data/data.csv
+data/chinese_only.csv
+data/实验1数据.xls
 .DS_Store
 .idea
 __pycache__
+test.py
