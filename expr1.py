@@ -10,7 +10,7 @@ IGNORED = ["和", "的"]
 THRESHOLD = 0.70
 
 
-def checkType(s1, s2):
+def checkType(s1, s2):  # 如果不符合我们定义的语法规则就不要了
     # if s1 == 'n' and s2 == 'n':
     #     return True
     # if s1 == 'v' and s2 == 'n':
@@ -18,7 +18,7 @@ def checkType(s1, s2):
     return True
 
 
-def checkContent(s1, s2):
+def checkContent(s1, s2):  # 如果词长度为1就不要了
     if len(s1) == 1 or len(s2) == 1:
         return False
     return True
@@ -35,36 +35,37 @@ def cosine_distance(matrix1, matrix2):
 
 if __name__ == "__main__":
     dic = {}
-    fr = open(VECTORS_POS, 'r', encoding='utf-8')
+    fr = open(VECTORS_POS, 'r', encoding='utf-8')  # 读取vector
     for line in fr:
         v = line.strip().split(' ')
         if has_chinese(v[0]) and v[0] not in IGNORED:
             dic[v[0]] = v[1:]
-    fr.close()
+    fr.close()  # dic done.
 
-    fr = open(DOC_POS, 'r', encoding='utf-8')
+    fr = open(DOC_POS, 'r', encoding='utf-8')  # DOC_POS：原始数据用excelToTxt处理之后得到
     for line in fr:
 
-        groups = peg.cut(line)
+        groups = peg.cut(line)  # jieba切词
 
         processed = []
         for word, flag in groups:
             if word != ' ':
-                processed.append([word, flag])
+                processed.append([word, flag])  # 不要空格了
 
         not_separate = []
 
-        for a in range(len(processed) - 1):
-            if processed[a][0] in dic.keys() and processed[a + 1][0] in dic.keys() and len(processed[a][0]) > 1:
+        for a in range(len(processed) - 1):  # 依次读取processed
+            if processed[a][0] in dic.keys() and processed[a + 1][0] in dic.keys() and len(processed[a][0]) > 1:  # 词是不是在dic里面
                 if checkContent(processed[a][0], processed[a + 1][0]) and checkType(processed[a][1], processed[a + 1][1]):
                     matrix1 = np.array([list(map(float, dic[processed[a][0]]))])
                     matrix2 = np.array([list(map(float, dic[processed[a + 1][0]]))])
-                    c = cosine_distance(matrix1, matrix2)
-                    if c >= THRESHOLD:
+                    c = cosine_distance(matrix1, matrix2)  # 60 ～ 62 算余弦
+                    if c >= THRESHOLD:  # 大于这个数就连起来
                         not_separate.append(a)
 
         st = ''
 
+        # 后面说不说都行
         for a in range(len(processed)):
             st = st + processed[a][0]
             if a not in not_separate:
@@ -73,4 +74,5 @@ if __name__ == "__main__":
                 # st = st + '-'
                 st = st + '(' + processed[a][1] + '/' + processed[a+1][1] + ')-'
         print(st)
+
     fr.close()
