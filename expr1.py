@@ -2,25 +2,25 @@
 import numpy as np
 from getChineseData import has_chinese
 import jieba.posseg as peg
-import sys
 
 VECTORS_POS = 'data/vectors.txt'
 DOC_POS = 'data/extracted.txt'
-IGNORED = ["和", "的"]
-THRESHOLD = 0.70
+OUTPUT_POS = 'output/task1_with_prop.txt'
+IGNORED = ["和", "的", "月份", "亿美元"]
+THRESHOLD = 0.55
+EXTENDED_NOUN = ["Ng", "n", "nr", "ns", "nt", "nz"]
+NOT_ALLOWED = ["v", "vg"]
 
 
-def checkType(s1, s2):  # 如果不符合我们定义的语法规则就不要了
-    # if s1 == 'n' and s2 == 'n':
-    #     return True
-    # if s1 == 'v' and s2 == 'n':
-    #     return True
-    return True
-
-
-def checkContent(s1, s2):  # 如果词长度为1就不要了
-    if len(s1) == 1 or len(s2) == 1:
+def checkProp(wordList):
+    if wordList[-1][1] not in EXTENDED_NOUN:
         return False
+    for word in wordList:
+        if word[1] in NOT_ALLOWED:
+            return False
+    # for word in wordList:
+    #     if word[1] not in EXTENDED_NOUN:
+    #         return False
     return True
 
 
@@ -33,46 +33,69 @@ def cosine_distance(matrix1, matrix2):
     cosine_distance = np.divide(matrix1_matrix2, np.dot(matrix1_norm, matrix2_norm.transpose()))
     return cosine_distance
 
+
 if __name__ == "__main__":
     dic = {}
-    fr = open(VECTORS_POS, 'r', encoding='utf-8')  # 读取vector
+    fr = open(VECTORS_POS, 'r', encoding='utf-8')
     for line in fr:
         v = line.strip().split(' ')
-        if has_chinese(v[0]) and v[0] not in IGNORED:
+        if v[0] not in IGNORED:
             dic[v[0]] = v[1:]
-    fr.close()  # dic done.
+    fr.close()
 
-    fr = open(DOC_POS, 'r', encoding='utf-8')  # DOC_POS：原始数据用excelToTxt处理之后得到
+    fr = open(DOC_POS, 'r', encoding='utf-8')
+    f = open(OUTPUT_POS, 'w+', encoding='utf-8')
+    result = ''
+    count = 0
     for line in fr:
-
-        groups = peg.cut(line)  # jieba切词
+        if count > 99999:
+            break
+        groups = peg.cut(line)
 
         processed = []
         for word, flag in groups:
             if word != ' ':
-                processed.append([word, flag])  # 不要空格了
+                processed.append([word, flag])
 
         not_separate = []
 
-        for a in range(len(processed) - 1):  # 依次读取processed
-            if processed[a][0] in dic.keys() and processed[a + 1][0] in dic.keys() and len(processed[a][0]) > 1:  # 词是不是在dic里面
-                if checkContent(processed[a][0], processed[a + 1][0]) and checkType(processed[a][1], processed[a + 1][1]):
-                    matrix1 = np.array([list(map(float, dic[processed[a][0]]))])
-                    matrix2 = np.array([list(map(float, dic[processed[a + 1][0]]))])
-                    c = cosine_distance(matrix1, matrix2)  # 60 ～ 62 算余弦
-                    if c >= THRESHOLD:  # 大于这个数就连起来
-                        not_separate.append(a)
+        i = 0
+        tmpIdxs = []
+        while i < len(processed) - 1:
+            if processed[i][0] in dic.keys() and processed[i + 1][0] in dic.keys() and len(processed[i][0]) > 1 and len(
+                    processed[i + 1][0]) > 1:
+                matrix1 = np.array([list(map(float, dic[processed[i][0]]))])
+                matrix2 = np.array([list(map(float, dic[processed[i + 1][0]]))])
+                c = cosine_distance(matrix1, matrix2)
+                if c >= THRESHOLD:
+                    tmpIdxs.append(i)
+                elif len(tmpIdxs):
+                    tmpIdxs.append(tmpIdxs[-1] + 1)
+                    tmpLen = len(tmpIdxs)
+                    while tmpLen >= 2:
+                        j = 0
+                        while j <= len(tmpIdxs) - tmpLen:
+                            if checkProp(list(map(lambda x: processed[x], tmpIdxs[j:j + tmpLen]))):
+                                # print(tmpIdxs)
+                                not_separate.extend(tmpIdxs[j:j + tmpLen - 1])
+                            j += 1
+                        tmpLen -= 1
 
-        st = ''
-
-        # 后面说不说都行
-        for a in range(len(processed)):
-            st = st + processed[a][0]
-            if a not in not_separate:
-                st = st + ' '
+                    tmpIdxs = []
             else:
-                # st = st + '-'
-                st = st + '(' + processed[a][1] + '/' + processed[a+1][1] + ')-'
-        print(st)
+                tmpIdxs = []
+            i += 1
 
+        for a in range(len(processed)):
+            result = result + processed[a][0]
+            if a not in not_separate:
+                result = result + ' '
+            else:
+                # result = result + '-'
+                # print('(' + processed[a][1] + '/' + processed[a+1][1] + ')-')
+                result = result + '(' + processed[a][1] + '/' + processed[a + 1][1] + ')-'
+        count += 1
+
+    f.write(result)
     fr.close()
+    f.close()

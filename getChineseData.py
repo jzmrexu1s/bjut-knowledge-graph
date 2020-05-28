@@ -29,4 +29,4 @@ def to_chinese_only():
 
 
 if __name__ == '__main__':
-    pass
+    to_chinese_only()
