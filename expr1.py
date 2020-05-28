@@ -6,10 +6,10 @@ import jieba.posseg as peg
 VECTORS_POS = 'data/vectors.txt'
 DOC_POS = 'data/extracted.txt'
 OUTPUT_POS = 'output/task1_result.txt'
-IGNORED = ["和", "的", "月份", "亿美元", "部分"]
-THRESHOLD = 0.6
-EXTENDED_NOUN = ["Ng", "n", "nr", "ns", "nt", "nz", "nrt"]
-NOT_ALLOWED = ["v", "vg", "vn"]
+IGNORED = ["和", "的", "月份", "亿美元", "部分", "预计"]
+THRESHOLD = 0.55
+EXTENDED_NOUN = ["n", "nr", "nz", "PER", "f", "ns", "LOC", "s", "nt", "ORG", "nw", "TIME"]
+NOT_ALLOWED = ["v", "d"]
 
 
 def checkProp(wordList):
@@ -81,7 +81,6 @@ if __name__ == "__main__":
                     j = 0
                     while j <= len(tmpIdxs) - tmpLen:
                         if checkProp(list(map(lambda x: processed[x], tmpIdxs[j:j + tmpLen]))):
-                            # print(list(map(lambda x: processed[x], tmpIdxs[j:j + tmpLen])))
                             not_separate.extend(tmpIdxs[j:j + tmpLen - 1])
                         j += 1
                     tmpLen -= 1
