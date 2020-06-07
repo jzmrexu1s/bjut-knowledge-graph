@@ -15,7 +15,7 @@ def has_chinese(s):
 
 def to_chinese_only():
     # 读取csv
-    df = pd.read_csv('data/data.csv', header=None)
+    df = pd.read_csv('../task1/data/data.csv', header=None)
     print(df.head())
 
     # 提取中文条目

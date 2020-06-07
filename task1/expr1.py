@@ -1,11 +1,10 @@
 # encoding=utf-8
 import numpy as np
-from getChineseData import has_chinese
 import jieba.posseg as peg
 
-VECTORS_POS = 'data/vectors.txt'
-DOC_POS = 'data/extracted.txt'
-OUTPUT_POS = 'output/task1_result.txt'
+VECTORS_POS = 'data/vectors_task2.txt'
+DOC_POS = 'data/test.txt'
+OUTPUT_POS = 'output/task2_result.txt'
 IGNORED = ["和", "的", "月份", "亿美元", "部分", "预计"]
 THRESHOLD = 0.55
 EXTENDED_NOUN = ["n", "nr", "nz", "PER", "f", "ns", "LOC", "s", "nt", "ORG", "nw", "TIME"]
