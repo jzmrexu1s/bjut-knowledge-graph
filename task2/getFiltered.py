@@ -65,7 +65,7 @@ def separate(rule_pre, rule_type, rule_assert, rule_from, rule_connect, s, d):
     if sp_assert or (sp_connect and sp_from):
         before_val = s[sp_assert + len(sp_assert_origin):] if sp_assert else s[sp_from + len(rule_from[0]): sp_connect]
         if before_val:
-            if not before_val[0].isnumeric():
+            if not before_val[0].isnumeric() and '目标价' in rule_type:
                 before_val = ''
         after_val = s[sp_assert + len(sp_assert_origin):] if sp_assert else s[sp_connect + len(sp_connect_origin):]
         for c in after_val:
