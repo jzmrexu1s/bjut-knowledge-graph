@@ -3,14 +3,17 @@ import numpy as np
 
 FROM_POS0 = "output/rate_separated.csv"
 FROM_POS1 = "output/price_separated.csv"
+FROM_POS2 = "output/income_separated.csv"
 TO_POS0 = "output/financial_companies_no_repeat.csv"
 TO_POS1 = "output/public_companies_no_repeat.csv"
 TO_POS2 = "output/rate_replaced.csv"
 TO_POS3 = "output/price_replaced.csv"
+TO_POS4 = "output/income_replaced.csv"
 
 if __name__ == '__main__':
     df_rate = pd.read_csv(FROM_POS0)
     df_price = pd.read_csv(FROM_POS1)
+    df_income = pd.read_csv(FROM_POS2)
     dic_fin_comp = dict()
     dic_pub_comp = dict()
     i_fin = 0
@@ -36,6 +39,12 @@ if __name__ == '__main__':
             dic_pub_comp[k] = i_pub
             i_pub += 1
 
+    for i in range(len(df_income)):
+        k = df_income.iloc[i, 1]
+        if k not in dic_fin_comp.keys():
+            dic_fin_comp[k] = i_fin
+            i_fin += 1
+
     fin_comp = list(dic_fin_comp.keys())
     df_fin_comp = pd.DataFrame(np.array(fin_comp).reshape(len(fin_comp), 1), columns=['Finance company'])
     df_fin_comp.to_csv(TO_POS0)
@@ -52,5 +61,9 @@ if __name__ == '__main__':
         df_price.iloc[i, 1] = dic_fin_comp[df_price.iloc[i, 1]]
         df_price.iloc[i, 2] = dic_pub_comp[df_price.iloc[i, 2]]
 
+    for i in range(len(df_income)):
+        df_income.iloc[i, 1] = dic_fin_comp[df_income.iloc[i, 1]]
+
     df_rate.to_csv(TO_POS2, index=False)
     df_price.to_csv(TO_POS3, index=False)
+    df_income.to_csv(TO_POS4, index=False)

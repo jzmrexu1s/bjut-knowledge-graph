@@ -72,6 +72,10 @@ def separate(rule_pre, rule_type, rule_assert, rule_from, rule_connect, s, d):
             if c in SYM:
                 after_val = after_val[:after_val.find(c)]
                 break
+        p = finance_company.find('：')
+        if p != -1:
+            finance_company = finance_company[p + 1:]
+
         date = str(d)
         return {'Finance company': finance_company.replace(' ', ''),
                 'Public company': public_company.replace(' ', ''),
